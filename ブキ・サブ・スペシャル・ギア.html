@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スプラ３ブキ・サブ・スペシャル・ギアルーレット　※全画面推奨</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: rgb(255, 255, 255);
+        }
+
+        #roulette-container {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 20px;
+            width: 90%;
+            max-width: 1200px; /* 最大幅を設定 */
+        }
+
+        #left-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #roulette-wheel {
+            width: 500px;
+            height: 100px; /* 円形ではなくテキスト表示エリアに変更 */
+            border: 1px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+
+        #spin-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #spin-button:hover {
+            background-color: #555;
+        }
+
+        #spin-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #file-upload {
+            margin-bottom: 20px;
+        }
+
+        #right-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            max-width: 300px;
+        }
+
+        /* 結果表示を右上に配置 */
+        #result-display-container {
+            width: 300px; /* 履歴の幅に合わせる */
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            margin-bottom: 10px; /* 履歴との間に隙間を作る */
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        /* 結果履歴をその下に配置 */
+        #history {
+            position: absolute;
+            top: 90px;
+            right: 20px;
+            width: 300px;
+            height: 400px; /* 縦長に設定 */
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            text-align: left;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #history ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #history ul li {
+            margin: 5px 0;
+            font-size: 16px;
+            background-color: #f9f9f9;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="roulette-container">
+        <!-- 左側：選択肢とボタン -->
+        <div id="left-container">
+            <h1>スプラ３ブキ・サブ・スペシャル・ギアルーレット</h1>
+            <input type="file" id="file-upload" accept=".txt">
+            <div id="roulette-wheel">ここに選択肢が表示されます</div>
+            <button id="spin-button" disabled>選択肢を決定する</button>
+        </div>
+
+        <!-- 右側：結果 -->
+        <div id="right-container">
+            <div id="result-display-container">
+                結果: <span id="result-display">ここに結果が表示されます</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果履歴（右上） -->
+    <div id="history">
+        <h3>結果履歴</h3>
+        <ul id="history-list"></ul>
+    </div>
+
+    <script>
+        const spinButton = document.getElementById("spin-button");
+        const rouletteWheel = document.getElementById("roulette-wheel");
+        const fileUpload = document.getElementById("file-upload");
+        const resultDisplay = document.getElementById("result-display");
+        const historyList = document.getElementById("history-list");
+
+        let choices = []; // 選択肢のリスト
+        let history = [];
+
+        // ランダムに選択肢を選ぶ関数
+        function getRandomChoice() {
+            if (choices.length === 0) return null;
+            const randomIndex = Math.floor(Math.random() * choices.length);
+            return choices[randomIndex];
+        }
+
+        // 結果履歴に追加する関数
+        function addHistory(result) {
+            // 履歴のリストに追加
+            const historyItem = document.createElement("li");
+            historyItem.textContent = result;
+            historyList.insertBefore(historyItem, historyList.firstChild);
+
+            // 15件以上の場合、最も古い履歴を削除
+            if (historyList.children.length > 15) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+
+        // ボタンをクリックしたときにランダムに選択肢を選ぶ
+        spinButton.addEventListener("click", () => {
+            let count = 0;
+            const maxCount = 100;
+            const interval = 50; // 50ミリ秒ごとに変更
+
+            // ボタンを無効化
+            spinButton.disabled = true;
+
+            // インターバルでランダムな選択肢を表示
+            const intervalId = setInterval(() => {
+                const result = getRandomChoice();
+                if (result) {
+                    rouletteWheel.textContent = result; // 画像なしの選択肢のテキストを表示
+                }
+                count++;
+
+                // 100回表示したらインターバルをクリアし、最終結果を表示
+                if (count >= maxCount) {
+                    clearInterval(intervalId);
+                    resultDisplay.textContent = rouletteWheel.textContent; // 最終結果を表示
+                    addHistory(resultDisplay.textContent); // 履歴に結果を追加
+                    spinButton.disabled = false; // ボタンを再度有効化
+                }
+            }, interval);
+        });
+
+        // ファイルアップロードで選択肢を取得
+        fileUpload.addEventListener("change", (event) => {
+            // ファイルが変更されたら履歴をクリア
+            historyList.innerHTML = "";  // 履歴をすべて削除
+
+            const file = event.target.files[0];
+            if (file && file.type === "text/plain") {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const fileContent = e.target.result;
+                    const lines = fileContent.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+                    choices = lines;
+
+                    rouletteWheel.textContent = "選択肢が読み込まれました";
+                    spinButton.disabled = false;
+                };
+
+                reader.readAsText(file);
+            } else {
+                spinButton.disabled = true;
+                alert("テキストファイルをアップロードしてください。\nルーレットリセットのため、リロードします。");
+                location.reload();
+            }
+        });
+
+    </script>
+</body>
+</html>
